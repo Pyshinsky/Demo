@@ -1,0 +1,29 @@
+@startuml
+title что-то
+
+start
+:Получить что-то;
+:сделвть что-то;
+
+fork
+ :найти что-то;
+ :сделвть;
+ :аааа;
+   fork again
+     :найти что-то;
+        fork
+           repeat
+             :добавить что-то\n что-то
+           repeat while (не что-то)
+         fork again
+           repeat
+             if (что равно ) then (что-то)
+               :Добавить что-то;
+             end
+           repeat while (что-то)
+         end fork
+       end fork
+   :добавить что-то;
+   :добавить что-то;
+stop
+@enduml
