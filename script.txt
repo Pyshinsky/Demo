@@ -1,0 +1,117 @@
+-- Удаление старых таблиц (если существуют)
+DROP TABLE IF EXISTS requests;
+DROP TABLE IF EXISTS Transport_db;
+DROP TABLE IF EXISTS Request_db;
+DROP TABLE IF EXISTS index_auto;
+DROP TABLE IF EXISTS index_city;
+DROP TABLE IF EXISTS users;
+
+-- Создание таблицы пользователей
+CREATE TABLE IF NOT EXISTS users (
+  id INT NOT NULL AUTO_INCREMENT,
+  username VARCHAR(45) NOT NULL,
+  password VARCHAR(45) NOT NULL,
+  role VARCHAR(45) NOT NULL DEFAULT 'user',
+  login_attempts INT DEFAULT 0,
+  active TINYINT(1) DEFAULT 1,
+  PRIMARY KEY (id)
+) ENGINE = InnoDB;
+
+-- Создание таблицы автомобилей
+CREATE TABLE IF NOT EXISTS index_auto (
+  id INT NOT NULL AUTO_INCREMENT,
+  auto_name VARCHAR(45) NOT NULL,
+  PRIMARY KEY (id)
+) ENGINE = InnoDB;
+
+-- Создание таблицы городов
+CREATE TABLE IF NOT EXISTS index_city (
+  id_city INT NOT NULL AUTO_INCREMENT,
+  name_city VARCHAR(45) NOT NULL,
+  PRIMARY KEY (id_city)
+) ENGINE = InnoDB;
+
+-- Создание таблицы заявок
+CREATE TABLE IF NOT EXISTS requests (
+  id INT NOT NULL AUTO_INCREMENT,
+  auto_id INT NOT NULL,
+  city_from_id INT NOT NULL,
+  city_to_id INT NOT NULL,
+  date_start DATETIME NOT NULL,
+  date_finish DATETIME NOT NULL,
+  created_by INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_auto
+    FOREIGN KEY (auto_id)
+    REFERENCES index_auto (id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_city_from
+    FOREIGN KEY (city_from_id)
+    REFERENCES index_city (id_city)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_city_to
+    FOREIGN KEY (city_to_id)
+    REFERENCES index_city (id_city)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_created_by
+    FOREIGN KEY (created_by)
+    REFERENCES users (id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+-- Добавление администратора
+INSERT INTO users (username, password, role) 
+VALUES ('admin', 'admin123', 'admin');
+
+-- Добавление тестовых логистов
+INSERT INTO users (username, password, role) VALUES
+('logist1', 'pass123', 'user'),
+('logist2', 'pass456', 'user');
+
+-- Добавление видов транспорта
+INSERT INTO index_auto (auto_name) VALUES 
+('Грузовик 5т'), 
+('Фура 20т'), 
+('Микроавтобус'),
+('Рефрижератор'),
+('Тентованный грузовик');
+
+-- Добавление городов
+INSERT INTO index_city (name_city) VALUES 
+('Москва'), 
+('Санкт-Петербург'), 
+('Казань'),
+('Новосибирск'),
+('Екатеринбург'),
+('Сочи'),
+('Владивосток');
+
+-- Добавление тестовых заявок
+INSERT INTO requests (auto_id, city_from_id, city_to_id, date_start, date_finish, created_by) VALUES
+(1, 1, 2, '2023-12-01 08:00:00', '2023-12-01 20:00:00', 2),
+(2, 3, 4, '2023-12-02 09:00:00', '2023-12-03 18:00:00', 3),
+(3, 2, 5, '2023-12-03 07:00:00', '2023-12-04 12:00:00', 2),
+(4, 6, 7, '2023-12-05 10:00:00', '2023-12-10 15:00:00', 3),
+(5, 1, 7, '2023-12-06 12:00:00', '2023-12-12 18:00:00', 2);
+
+-- Создание представления для удобного доступа к данным заявок
+CREATE VIEW requests_view AS
+SELECT 
+  r.id,
+  a.auto_name AS transport,
+  cf.name_city AS city_from,
+  ct.name_city AS city_to,
+  r.date_start,
+  r.date_finish,
+  u.username AS created_by,
+  r.created_at
+FROM requests r
+JOIN index_auto a ON r.auto_id = a.id
+JOIN index_city cf ON r.city_from_id = cf.id_city
+JOIN index_city ct ON r.city_to_id = ct.id_city
+JOIN users u ON r.created_by = u.id;
